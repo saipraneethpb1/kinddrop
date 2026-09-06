@@ -26,9 +26,11 @@ Three deliberate constraints shape the whole thing:
 
 ## Demo
 
-**Live app: <!-- PASTE RENDER URL --> **
+**Live app: https://kinddrop.onrender.com**
 
 Try it with something like *"I can review resumes"*, 30 minutes, *"recent grads"*, remote.
+
+It's on a free instance, so the first request after a quiet spell takes ~30 seconds to wake up. The pill at the top of the result tells you which Gemini model answered — see below for why that varies.
 
 <!-- Optional: embed a screen recording here -->
 
@@ -103,6 +105,23 @@ Free-text fields flowing straight into a prompt are an injection surface. This i
 - Gemini failures return `502` and parse failures return their own `502` with a different message, so "the API is down" and "the model returned garbage" are distinguishable in the logs instead of collapsing into one useless `500`.
 - Every rendered field is HTML-escaped. Model output is untrusted output.
 
+### The bug that would have killed the demo
+
+I deployed, saw a green health check, and nearly called it done. Then every plan request started failing with a generic error.
+
+I burned two wrong theories on it — a stale SDK on the server, then a bug specific to the structured-output path — because I was inferring from the outside. The fix was to stop guessing and make the deployed instance report its own failure: I added a `?probe=1` to the health endpoint that runs a minimal live call and returns the upstream status verbatim.
+
+It answered immediately:
+
+```
+429 Quota exceeded for metric: generate_content_free_tier_requests,
+limit: 20, model: gemini-3.8-flash
+```
+
+Twenty requests per day. My own testing had spent them. Nothing was broken — and if I'd shipped it, the demo would have been dead for anyone who arrived after the twentieth visitor, showing them a vague "Gemini didn't answer" that pointed at exactly the wrong thing.
+
+Two lessons made it into the code. **A health check that doesn't touch the dependency isn't a health check** — mine passed the whole time the app was unusable, which is what let me believe the deploy was fine. And **an error message that collapses distinct failures into one string costs you the debugging session later**: quota exhaustion now returns its own `429` with its own wording, separate from an upstream outage, separate again from a malformed response.
+
 ### What I left out
 
 No accounts, no database, no history, no sharing, no streak counter. Every one of those was tempting and every one would have made the tool worse. A streak turns generosity into a chore you can fail at. Sharing turns it into content. The app forgets you the moment you close it, and that's the feature.
@@ -117,7 +136,7 @@ What I think makes it a real use of the platform rather than a chat box in a nic
 
 1. **Schema-enforced structured output** means the UI renders a guaranteed shape. No defensive parsing, no fallback rendering, no "sometimes it comes back as a bulleted list."
 2. **The constraint set is the design work.** Six explicit prohibitions covering consent, dignity, safety, and assumption-avoidance. The difference between a generosity app that's useful and one that's mildly insulting is entirely in those lines.
-3. **`gemini-3.8-flash`** is the right tier for this — one short, highly-constrained generation where latency is the thing the user feels. Nobody waits thirty seconds to find out how to be nice to someone.
+3. **A quota-aware model ladder.** `gemini-3.8-flash` is the right tier for this — one short, highly-constrained generation where latency is what the user feels. But its free tier allows 20 requests per day, and a public demo burns that before lunch. So a `429` walks the request down `3.8-flash → 3.6-flash → 3.5-flash → 3.5-flash-lite`, and the app keeps working. Same schema, same guardrails, every rung.
 
 ---
 
