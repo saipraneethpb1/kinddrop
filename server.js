@@ -35,7 +35,16 @@ app.use(express.static("public"));
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-const MODEL = "gemini-3.8-flash";
+// Free-tier quota on the newest model is 20 requests/day, which a public demo
+// exhausts almost immediately. Fall back down the ladder on 429 so the app
+// keeps working instead of showing an error to everyone after the 20th visitor.
+const MODELS = [
+  "gemini-3.8-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite"
+];
+const MODEL = MODELS[0];
 const ALLOWED_MINUTES = new Set(["15", "30", "60", "120"]);
 
 const FIELD_LIMITS = {
@@ -149,20 +158,37 @@ app.post("/api/idea", async (req, res) => {
   });
 
   let interaction;
-  try {
-    interaction = await ai.interactions.create({
-      model: MODEL,
-      input: prompt,
-      response_format: {
-        type: "text",
-        mime_type: "application/json",
-        schema: PLAN_SCHEMA
-      }
-    });
-  } catch (error) {
-    console.error("[gemini] request failed:", error);
-    return res.status(502).json({
-      error: "Gemini didn't answer just now. Give it a moment and try again."
+  let usedModel;
+  let lastError;
+
+  for (const model of MODELS) {
+    try {
+      interaction = await ai.interactions.create({
+        model,
+        input: prompt,
+        response_format: {
+          type: "text",
+          mime_type: "application/json",
+          schema: PLAN_SCHEMA
+        }
+      });
+      usedModel = model;
+      break;
+    } catch (error) {
+      lastError = error;
+      // 429 means this model's quota is spent; anything else is a real fault.
+      if (error?.status !== 429) break;
+      console.warn(`[gemini] ${model} rate limited, trying next model`);
+    }
+  }
+
+  if (!interaction) {
+    console.error("[gemini] request failed:", lastError);
+    const quotaExhausted = lastError?.status === 429;
+    return res.status(quotaExhausted ? 429 : 502).json({
+      error: quotaExhausted
+        ? "KindDrop has hit today's free Gemini quota. Please try again in a little while."
+        : "Gemini didn't answer just now. Give it a moment and try again."
     });
   }
 
@@ -171,7 +197,7 @@ app.post("/api/idea", async (req, res) => {
     if (!plan?.title || !Array.isArray(plan.steps)) {
       throw new Error("plan missing required fields");
     }
-    res.json(plan);
+    res.json({ ...plan, model: usedModel });
   } catch (error) {
     console.error("[gemini] unparseable plan:", error, interaction.output_text);
     res.status(502).json({
@@ -187,6 +213,7 @@ app.get("/api/health", async (req, res) => {
   const payload = {
     ok: true,
     model: MODEL,
+    models: MODELS,
     keyConfigured: Boolean(key),
     keyLength: key.length,
     sdk: sdkVersion(),

@@ -42,6 +42,7 @@ form.addEventListener("submit", async (event) => {
 
     result.innerHTML = `
       <span class="pill">${escapeHTML(body.minutes)}-minute KindDrop</span>
+      ${data.model ? `<span class="pill model">${escapeHTML(data.model)}</span>` : ""}
       <h2>${escapeHTML(data.title)}</h2>
       <p>${escapeHTML(data.why)}</p>
 

@@ -21,7 +21,8 @@ People often want to help but get stuck between good intentions and large commit
 
 - Node.js + Express
 - Vanilla HTML/CSS/JS
-- Google Gemini (`gemini-3.8-flash`) via the Interactions API in `@google/genai`
+- Google Gemini via the Interactions API in `@google/genai`, with a model
+  fallback chain (`gemini-3.8-flash` → `3.6-flash` → `3.5-flash` → `3.5-flash-lite`)
 
 ## Run locally
 
@@ -50,6 +51,12 @@ a generosity plan. Two things make it dependable rather than decorative:
 (`PLAN_SCHEMA` in `server.js`) and passed via `response_format`, so Gemini
 returns parseable JSON by construction. There is no markdown-fence stripping or
 regex cleanup in the response path.
+
+**Quota-aware model fallback.** The newest model has a free-tier limit of 20
+requests per day, which a public demo exhausts almost immediately. On a `429`
+the request retries down a ladder of models, so the app keeps answering instead
+of failing for every visitor after the twentieth. The model that actually
+answered is returned to the client and shown in the UI.
 
 **Guardrails in the prompt.** The prompt explicitly constrains for safety,
 consent, privacy, dignity, accessibility, and anti-shaming, and forbids
