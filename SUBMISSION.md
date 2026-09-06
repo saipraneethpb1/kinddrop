@@ -34,7 +34,7 @@ Try it with something like *"I can review resumes"*, 30 minutes, *"recent grads"
 
 ## Code
 
-<!-- PASTE GITHUB URL -->
+{% embed https://github.com/saipraneethpb1/kinddrop %}
 
 MIT licensed. Around 200 lines of application code — Node, Express, and vanilla HTML/CSS/JS, no build step.
 
