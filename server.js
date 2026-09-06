@@ -1,15 +1,25 @@
 import "dotenv/config";
 import express from "express";
+import path from "node:path";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { GoogleGenAI } from "@google/genai";
 
 const require = createRequire(import.meta.url);
 
 function sdkVersion() {
+  // @google/genai does not export package.json, so resolve the entry point
+  // and walk up to the package root instead.
   try {
     return require("@google/genai/package.json").version;
-  } catch {
-    return "unknown";
+  } catch { /* fall through */ }
+  try {
+    const entry = require.resolve("@google/genai");
+    const marker = `${path.sep}node_modules${path.sep}@google${path.sep}genai${path.sep}`;
+    const root = entry.slice(0, entry.indexOf(marker) + marker.length);
+    return JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")).version;
+  } catch (error) {
+    return `unknown (${error.code || error.message})`;
   }
 }
 
@@ -184,16 +194,22 @@ app.get("/api/health", async (req, res) => {
     node: process.version
   };
 
-  if (req.query.probe !== "1") return res.json(payload);
+  if (req.query.probe !== "1" && req.query.probe !== "schema") return res.json(payload);
 
   if (rateLimited(req.ip)) {
     return res.status(429).json({ ...payload, probe: { ok: false, reason: "rate limited" } });
   }
 
+  const withSchema = req.query.probe === "schema";
+  payload.probeMode = withSchema ? "structured" : "plain";
+
   try {
     const probe = await ai.interactions.create({
       model: MODEL,
-      input: "Reply with the single word: OK"
+      input: withSchema ? "Give one tiny act of kindness." : "Reply with the single word: OK",
+      ...(withSchema
+        ? { response_format: { type: "text", mime_type: "application/json", schema: PLAN_SCHEMA } }
+        : {})
     });
     payload.probe = { ok: true, output: String(probe.output_text || "").slice(0, 40) };
   } catch (error) {
