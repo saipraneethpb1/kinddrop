@@ -32,8 +32,6 @@ Try something like *"I can review resumes"*, 30 minutes, *"recent grads"*, remot
 
 Fair warning, it's on a free instance, so if nobody's used it for a while the first request takes about 30 seconds to wake up. There's a small pill at the top of the result showing which Gemini model answered. More on why that changes further down.
 
-<!-- Optional: embed a screen recording here -->
-
 ## Code
 
 {% embed https://github.com/saipraneethpb1/kinddrop %}
