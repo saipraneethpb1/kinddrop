@@ -4,7 +4,7 @@ published: false
 tags: devchallenge, weekendchallenge, googleai, gemini
 ---
 
-*This is a submission for the [Weekend Challenge: Generosity Edition](https://dev.to/challenges/weekend-2026-09-03)*
+*This is a submission for [Weekend Challenge: Generosity Edition](https://dev.to/challenges/weekend-2026-09-03)*
 
 ## What I Built
 
