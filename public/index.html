@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="KindDrop turns what you already have into a small act of generosity you can do today." />
+  <title>KindDrop — generosity you can do today</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="eyebrow">A tiny generosity engine</div>
+      <h1>What can you give <em>without buying anything?</em></h1>
+      <p>Tell KindDrop what you have—time, a skill, useful items, attention—and Gemini turns it into one practical act of generosity you can finish today.</p>
+    </header>
+
+    <section class="grid">
+      <form id="kindForm" class="card form-card">
+        <label>
+          What can you offer?
+          <textarea id="resource" required maxlength="300" placeholder="e.g. I can review resumes, I have 30 notebooks, I can teach basic Excel…"></textarea>
+        </label>
+
+        <div class="two">
+          <label>
+            Time available
+            <select id="minutes">
+              <option value="15">15 minutes</option>
+              <option value="30" selected>30 minutes</option>
+              <option value="60">1 hour</option>
+              <option value="120">2 hours</option>
+            </select>
+          </label>
+
+          <label>
+            Cause / people
+            <input id="cause" maxlength="120" placeholder="students, elders, open source…" />
+          </label>
+        </div>
+
+        <label>
+          General context <span>(optional — don't enter a precise address)</span>
+          <input id="location" maxlength="120" placeholder="e.g. Hyderabad, college campus, remote/online" />
+        </label>
+
+        <label>
+          Constraints <span>(optional)</span>
+          <input id="accessibility" maxlength="160" placeholder="e.g. remote only, limited mobility, no spending" />
+        </label>
+
+        <button id="submitBtn" type="submit">Turn this into kindness →</button>
+        <p class="privacy">KindDrop asks for no name, phone number, email, or exact address.</p>
+      </form>
+
+      <section id="result" class="card result-card empty" aria-live="polite">
+        <div class="placeholder">
+          <div class="spark">✦</div>
+          <h2>Your KindDrop appears here</h2>
+          <p>Small, specific, respectful. Designed to be done—not just admired.</p>
+        </div>
+      </section>
+    </section>
+
+    <footer>
+      Built for DEV Weekend Challenge: Generosity Edition · Powered by Google Gemini
+    </footer>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
