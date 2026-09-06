@@ -1,6 +1,17 @@
 import "dotenv/config";
 import express from "express";
+import { createRequire } from "node:module";
 import { GoogleGenAI } from "@google/genai";
+
+const require = createRequire(import.meta.url);
+
+function sdkVersion() {
+  try {
+    return require("@google/genai/package.json").version;
+  } catch {
+    return "unknown";
+  }
+}
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -159,8 +170,40 @@ app.post("/api/idea", async (req, res) => {
   }
 });
 
-app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, model: MODEL, keyConfigured: Boolean(process.env.GEMINI_API_KEY) });
+// `?probe=1` makes a minimal live call so a deployed instance can report why
+// Gemini is failing, instead of the failure only being visible in the logs.
+app.get("/api/health", async (req, res) => {
+  const key = process.env.GEMINI_API_KEY || "";
+  const payload = {
+    ok: true,
+    model: MODEL,
+    keyConfigured: Boolean(key),
+    keyLength: key.length,
+    sdk: sdkVersion(),
+    commit: (process.env.RENDER_GIT_COMMIT || "local").slice(0, 7),
+    node: process.version
+  };
+
+  if (req.query.probe !== "1") return res.json(payload);
+
+  if (rateLimited(req.ip)) {
+    return res.status(429).json({ ...payload, probe: { ok: false, reason: "rate limited" } });
+  }
+
+  try {
+    const probe = await ai.interactions.create({
+      model: MODEL,
+      input: "Reply with the single word: OK"
+    });
+    payload.probe = { ok: true, output: String(probe.output_text || "").slice(0, 40) };
+  } catch (error) {
+    payload.probe = {
+      ok: false,
+      status: error?.status ?? null,
+      message: String(error?.message || error).slice(0, 400)
+    };
+  }
+  res.json(payload);
 });
 
 app.listen(port, () => {
