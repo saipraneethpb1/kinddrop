@@ -1,7 +1,7 @@
 ---
 title: "KindDrop: generosity you can actually finish today"
 published: false
-tags: weekendchallenge, googleai, gemini, javascript
+tags: devchallenge, weekendchallenge, googleai, gemini
 ---
 
 *This is a submission for the [Weekend Challenge: Generosity Edition](https://dev.to/challenges/weekend-2026-09-03)*
