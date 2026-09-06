@@ -49,7 +49,10 @@ form.addEventListener("submit", async (event) => {
       <ol>${steps}</ol>
 
       <h3>Say this</h3>
-      <div class="message">“${escapeHTML(data.message)}”</div>
+      <div class="message">
+        <p>“${escapeHTML(data.message)}”</p>
+        <button type="button" class="copy" data-message="${escapeHTML(data.message)}">Copy message</button>
+      </div>
 
       <h3>Dignity & safety</h3>
       <p>${escapeHTML(data.safety)}</p>
@@ -60,6 +63,16 @@ form.addEventListener("submit", async (event) => {
       <h3>If you want to continue</h3>
       <p>${escapeHTML(data.next)}</p>
     `;
+    const copyBtn = result.querySelector(".copy");
+    copyBtn?.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(copyBtn.dataset.message);
+        copyBtn.textContent = "Copied";
+      } catch {
+        copyBtn.textContent = "Press Ctrl+C to copy";
+      }
+      setTimeout(() => { copyBtn.textContent = "Copy message"; }, 2000);
+    });
   } catch (error) {
     result.innerHTML = `<div class="error"><h2>That KindDrop didn't land.</h2><p>${escapeHTML(error.message)}</p></div>`;
   } finally {

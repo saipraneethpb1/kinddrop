@@ -54,6 +54,12 @@ button:disabled { opacity: .6; cursor: wait; }
 .message {
   padding: 14px 16px; background: #f4f1e8; border-radius: 13px; border-left: 4px solid #d6a24e;
 }
+.message p { margin: 0; }
+button.copy {
+  width: auto; margin-top: 12px; padding: 8px 13px; font-size: 13px; font-weight: 700;
+  background: transparent; color: #34533d; border: 1px solid #c3ccc1; border-radius: 9px;
+}
+button.copy:hover { background: #fff; }
 .pill { display: inline-block; font-size: 12px; font-weight: 800; padding: 6px 9px; border-radius: 999px; background: #e8efe8; color: #34533d; }
 footer { text-align: center; color: #7a827a; font-size: 12px; padding: 28px 0 0; }
 .error { color: #9a2c2c; }
